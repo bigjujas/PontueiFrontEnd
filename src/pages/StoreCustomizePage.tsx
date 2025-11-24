@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { getMyEstablishment, updateEstablishment } from "@/services/store";
 import { toast } from "sonner";
 
-import { Upload, Palette, Image, Save } from "lucide-react";
+import { Image, Save } from "lucide-react";
 
 export default function StoreCustomizePage() {
   const [loading, setLoading] = useState(true);

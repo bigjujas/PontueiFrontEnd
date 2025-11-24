@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthForm } from "@/components/common";
-import { Sparkles } from "lucide-react";
+
 import { motion } from "framer-motion";
 
 const RegisterPage = () => {
