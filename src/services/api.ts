@@ -1,7 +1,6 @@
 // src/services/api.ts
 import axios, { AxiosInstance } from 'axios';
 
-// ⚠️ SUBSTITUA PELA SUA URL BASE DA API
 const API_BASE_URL = 'https://pontuei-back-end.vercel.app/'; 
 
 const api: AxiosInstance = axios.create({
