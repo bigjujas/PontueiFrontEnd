@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { useScroll, useTransform } from "framer-motion";
+import { useScroll, useTransform, motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { StepCard } from "@/components/landing";
 import { useLandingData } from "@/hooks/useLandingData";
@@ -15,6 +15,13 @@ export const HowToStart = () => {
   const stepIndex = useTransform(scrollYProgress, [0, 1], [0, steps.length - 1]);
   const [currentStep, setCurrentStep] = useState(0);
 
+  const stepImages = [
+    "/Pontuei app store.png",
+    "/Print Hub1.png", 
+    "/Print Pontos.png",
+    "/Print Hub.png"
+  ];
+
   useEffect(() => {
     const unsubscribe = stepIndex.on("change", (latest) => {
       setCurrentStep(Math.round(latest));
@@ -27,7 +34,7 @@ export const HowToStart = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <Badge variant="outline" className="mb-4 text-primary border-primary/20">
-            Processo Simples
+            Imagens Geradas por IA
           </Badge>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tighter">
             Como começar a{" "}
@@ -53,10 +60,16 @@ export const HowToStart = () => {
                 ))}
               </div>
 
-              <div className="w-1/3 h-[60vh] rounded-2xl bg-muted flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  [Imagem do App aqui]
-                </p>
+              <div className="w-1/3 h-[60vh] rounded-2xl bg-muted flex items-center justify-center overflow-hidden">
+                <motion.img
+                  key={currentStep}
+                  src={stepImages[currentStep]}
+                  alt={`${steps[currentStep]?.title} - Passo ${steps[currentStep]?.step}`}
+                  className="w-full h-full object-cover rounded-2xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
               </div>
             </div>
           </div>
@@ -65,5 +78,3 @@ export const HowToStart = () => {
     </section>
   );
 };
-
-
