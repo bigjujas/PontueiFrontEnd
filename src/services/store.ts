@@ -44,6 +44,34 @@ export interface CreateProductPayload {
   photo_url?: string;
 }
 
+export interface Order {
+  id: string;
+  client_id: string;
+  establishment_id: string;
+  status: string;
+  total_amount: number;
+  points_generated: number;
+  pickup_type: string;
+  pickup_qr_code?: string;
+  created_at: string;
+  updated_at: string;
+  client: {
+    name: string;
+  };
+  order_items: {
+    id: string;
+    quantity: number;
+    unit_price: number;
+    product: {
+      name: string;
+    };
+  }[];
+}
+
+export interface UpdateOrderStatusPayload {
+  status: string;
+}
+
 export const createEstablishment = async (payload: CreateEstablishmentPayload): Promise<Establishment> => {
   try {
     console.log('Criando establishment:', payload);
@@ -139,6 +167,30 @@ export const updateProduct = async (productId: string, payload: Partial<CreatePr
       throw new Error(error.response.data.message || 'Erro ao atualizar produto');
     }
     throw new Error('Erro ao atualizar produto');
+  }
+};
+
+// Funções para pedidos
+export const getStoreOrders = async (): Promise<Order[]> => {
+  try {
+    const response = await api.get<Order[]>('/orders/my-store');
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar pedidos:', error);
+    throw new Error('Erro ao buscar pedidos');
+  }
+};
+
+export const updateOrderStatus = async (orderId: string, payload: UpdateOrderStatusPayload): Promise<Order> => {
+  try {
+    const response = await api.put<Order>(`/orders/${orderId}/status`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao atualizar status do pedido:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Erro ao atualizar status do pedido');
+    }
+    throw new Error('Erro ao atualizar status do pedido');
   }
 };
 

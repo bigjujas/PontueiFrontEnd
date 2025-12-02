@@ -1,80 +1,101 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getStoreOrders, updateOrderStatus, Order } from "@/services/store";
+import { toast } from "sonner";
 
 import { ShoppingCart, Clock, CheckCircle, XCircle, Eye, Truck } from "lucide-react";
 
-const mockOrders = [
-  { 
-    id: "001", 
-    customer: "João Silva", 
-    items: ["2x Hambúrguer", "1x Refrigerante"], 
-    total: 57.80, 
-    status: "Preparando", 
-    time: "14:30",
-    address: "Rua das Flores, 123"
-  },
-  { 
-    id: "002", 
-    customer: "Maria Santos", 
-    items: ["1x Pizza Margherita", "1x Suco"], 
-    total: 42.50, 
-    status: "Pronto", 
-    time: "14:15",
-    address: "Av. Principal, 456"
-  },
-  { 
-    id: "003", 
-    customer: "Pedro Costa", 
-    items: ["3x Pastel", "2x Refrigerante"], 
-    total: 28.90, 
-    status: "Entregue", 
-    time: "13:45",
-    address: "Rua do Comércio, 789"
-  },
-  { 
-    id: "004", 
-    customer: "Ana Oliveira", 
-    items: ["1x Hambúrguer Especial"], 
-    total: 35.00, 
-    status: "Cancelado", 
-    time: "13:20",
-    address: "Rua Nova, 321"
-  },
-];
+
 
 export default function StoreOrdersPage() {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("Todos");
 
-  const statusOptions = ["Todos", "Preparando", "Pronto", "Entregue", "Cancelado"];
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      const orderList = await getStoreOrders();
+      setOrders(orderList);
+    } catch (error) {
+      toast.error('Erro ao carregar pedidos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statusOptions = ["Todos", "pending", "preparing", "ready", "completed", "cancelled"];
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending": return "Pendente";
+      case "preparing": return "Preparando";
+      case "ready": return "Pronto";
+      case "completed": return "Entregue";
+      case "cancelled": return "Cancelado";
+      default: return status;
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Preparando": return "bg-yellow-100 text-yellow-800";
-      case "Pronto": return "bg-blue-100 text-blue-800";
-      case "Entregue": return "bg-green-100 text-green-800";
-      case "Cancelado": return "bg-red-100 text-red-800";
+      case "pending": return "bg-gray-100 text-gray-800";
+      case "preparing": return "bg-yellow-100 text-yellow-800";
+      case "ready": return "bg-blue-100 text-blue-800";
+      case "completed": return "bg-green-100 text-green-800";
+      case "cancelled": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Preparando": return <Clock className="w-4 h-4" />;
-      case "Pronto": return <CheckCircle className="w-4 h-4" />;
-      case "Entregue": return <Truck className="w-4 h-4" />;
-      case "Cancelado": return <XCircle className="w-4 h-4" />;
+      case "pending": return <ShoppingCart className="w-4 h-4" />;
+      case "preparing": return <Clock className="w-4 h-4" />;
+      case "ready": return <CheckCircle className="w-4 h-4" />;
+      case "completed": return <Truck className="w-4 h-4" />;
+      case "cancelled": return <XCircle className="w-4 h-4" />;
       default: return <ShoppingCart className="w-4 h-4" />;
     }
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: string) => {
-    setOrders(orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await updateOrderStatus(orderId, { status: newStatus });
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ));
+      toast.success('Status do pedido atualizado!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar status');
+    }
   };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getOrderItems = (order: Order) => {
+    return order.order_items.map(item => 
+      `${item.quantity}x ${item.product.name}`
+    ).join(', ');
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <p className="text-center py-8">Carregando pedidos...</p>
+      </div>
+    );
+  }
 
   const filteredOrders = selectedStatus === "Todos" 
     ? orders 
@@ -113,7 +134,7 @@ export default function StoreOrdersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-600">
-                  {orders.filter(o => o.status === "Preparando").length}
+                  {orders.filter(o => o.status === "preparing").length}
                 </div>
                 <p className="text-xs text-muted-foreground">pedidos</p>
               </CardContent>
@@ -126,7 +147,7 @@ export default function StoreOrdersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {orders.filter(o => o.status === "Pronto").length}
+                  {orders.filter(o => o.status === "ready").length}
                 </div>
                 <p className="text-xs text-muted-foreground">pedidos</p>
               </CardContent>
@@ -139,7 +160,7 @@ export default function StoreOrdersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(orders.reduce((sum, order) => sum + order.total, 0))}
+                  {formatCurrency(orders.reduce((sum, order) => sum + Number(order.total_amount), 0))}
                 </div>
                 <p className="text-xs text-muted-foreground">hoje</p>
               </CardContent>
@@ -161,7 +182,7 @@ export default function StoreOrdersPage() {
                     className="flex items-center gap-2"
                   >
                     {getStatusIcon(status)}
-                    {status}
+                    {status === "Todos" ? status : getStatusLabel(status)}
                   </Button>
                 ))}
               </div>
@@ -182,23 +203,22 @@ export default function StoreOrdersPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold">Pedido #{order.id}</h3>
+                          <h3 className="font-bold">Pedido #{order.id.slice(-6)}</h3>
                           <Badge className={getStatusColor(order.status)}>
-                            {order.status}
+                            {getStatusLabel(order.status)}
                           </Badge>
-                          <span className="text-sm text-muted-foreground">{order.time}</span>
+                          <span className="text-sm text-muted-foreground">{formatTime(order.created_at)}</span>
                         </div>
-                        <p className="font-medium">{order.customer}</p>
-                        <p className="text-sm text-muted-foreground">{order.address}</p>
+                        <p className="font-medium">{order.client.name}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold">{formatCurrency(order.total)}</div>
+                        <div className="text-lg font-bold">{formatCurrency(Number(order.total_amount))}</div>
                       </div>
                     </div>
 
                     <div className="mb-3">
                       <p className="text-sm text-muted-foreground mb-1">Itens:</p>
-                      <p className="text-sm">{order.items.join(", ")}</p>
+                      <p className="text-sm">{getOrderItems(order)}</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -206,18 +226,26 @@ export default function StoreOrdersPage() {
                         <Eye className="w-4 h-4 mr-1" />
                         Detalhes
                       </Button>
-                      {order.status === "Preparando" && (
+                      {order.status === "pending" && (
                         <Button 
                           size="sm" 
-                          onClick={() => updateOrderStatus(order.id, "Pronto")}
+                          onClick={() => handleUpdateOrderStatus(order.id, "preparing")}
+                        >
+                          Iniciar Preparo
+                        </Button>
+                      )}
+                      {order.status === "preparing" && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleUpdateOrderStatus(order.id, "ready")}
                         >
                           Marcar como Pronto
                         </Button>
                       )}
-                      {order.status === "Pronto" && (
+                      {order.status === "ready" && (
                         <Button 
                           size="sm" 
-                          onClick={() => updateOrderStatus(order.id, "Entregue")}
+                          onClick={() => handleUpdateOrderStatus(order.id, "completed")}
                         >
                           Marcar como Entregue
                         </Button>
